@@ -9,22 +9,22 @@ FastAPI backend that receives captured packets and streams them live to clients.
 - **Event model:** one packet event structure used across the backend
 
 ## Structure
-app/
-├── main.py              # starts the app, adds the routes
-├── live_feed/
-│   ├── router.py        # /ingest and /stream endpoints
-│   ├── service.py       # receives packets, sends them to connected clients
-│   └── reorder_buffer.py
-└── models/
-    └── event.py         # packet event structure
-tests/
-└── test_live_feed.py
+app/ <br>
+├── main.py              # starts the app, adds the routes <br>
+├── live_feed/ <br>
+│   ├── router.py        # /ingest and /stream endpoints <br>
+│   ├── service.py       # receives packets, sends them to connected clients <br>
+│   └── reorder_buffer.py <br>
+└── models/ <br>
+    └── event.py         # packet event structure <br>
+tests/ <br>
+└── test_live_feed.py <br>
 
-## Run
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --port 8000
+## Run <br>
+cd backend <br>
+pip install -r requirements.txt <br>
+uvicorn app.main:app --port 8000 <br>
 
-## Test
-pytest tests/test_live_feed.py
+## Test <br>
+pytest tests/test_live_feed.py <br>
 
