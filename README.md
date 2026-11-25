@@ -21,7 +21,7 @@ tests/
 └── test_live_feed.py
 
 ## Run
-cd core/backend
+cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --port 8000
 
