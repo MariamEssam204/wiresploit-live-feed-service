@@ -29,9 +29,43 @@
 .psf-cell { color: var(--text-faint) !important; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 .malformed-flag { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; background: var(--signal); color: #1a0703; font-weight: 700; font-size: 10px; margin-right: 6px; }
 
-/* Newly arrived rows flash, so an insert is noticeable wherever it lands. */
-@keyframes row-arrival { 0% { background: var(--bg-selected); } 100% { background: transparent; } }
-.packet-table tbody tr.is-new:not(.is-selected) { animation: row-arrival 2.2s ease-out; }
+/*
+ * Arrival highlights. Every appended row lights up and fades, so the analyst
+ * watching the bottom sees what just came in. Neutral, not a lane colour:
+ * it means "new", not a bus.
+ */
+.packet-table tbody tr.is-new:not(.is-selected) { animation: row-arrival 2.5s ease-out; }
+@keyframes row-arrival {
+  0%   { background: color-mix(in srgb, var(--text) 16%, transparent); box-shadow: inset 3px 0 0 var(--text-dim); }
+  100% { background: transparent; box-shadow: inset 3px 0 0 transparent; }
+}
+
+/*
+ * Late (out-of-order) rows are inserted mid-table, away from where the
+ * analyst is looking, so they get signal red: held, then faded, longer than
+ * a normal arrival. A thin red edge stays afterwards so they remain findable.
+ */
+.packet-table tbody tr.is-late:not(.is-selected) { animation: row-late-arrival 6s ease-out; }
+.packet-table tbody tr.is-late > td:first-child { box-shadow: inset 3px 0 0 var(--signal-line); }
+@keyframes row-late-arrival {
+  0%, 35% { background: var(--signal-soft); }
+  100%    { background: transparent; }
+}
+
+/* "Late packet inserted above" notice, pinned to the bottom of the table. */
+.late-notice-anchor { position: sticky; bottom: 12px; height: 0; display: flex; justify-content: center; }
+.late-notice {
+  position: absolute; bottom: 0;
+  padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  font: 600 var(--text-sm) var(--sans);
+  color: var(--text); background: var(--bg-selected);
+  border: 1px solid var(--signal-line); box-shadow: 0 4px 16px rgb(0 0 0 / 0.45);
+}
+.late-notice:hover { background: var(--bg-hover); }
+
+@media (prefers-reduced-motion: reduce) {
+  .packet-table tbody tr.is-new, .packet-table tbody tr.is-late { animation: none; }
+}
 
 /* ---------- Packet details ---------- */
 .packet-details { padding: 12px 16px 16px; }
