@@ -16,6 +16,41 @@ import { sendCaptureStart, sendCaptureStop, startPacketStream } from '../api/cli
 const CLOCK_TICK_MS = 1000
 
 /**
+ * timestamp_ns arrives as a string (nanoseconds do not fit in a JS number),
+ * so it is compared as a BigInt.
+ * @param {object} packet
+ * @returns {bigint} The packet's capture time in nanoseconds (0 if missing).
+ */
+function getTimestampNs(packet) {
+  try {
+    return BigInt(packet.timestamp_ns)
+  } catch {
+    return 0n
+  }
+}
+
+/**
+ * Insert a late packet at its place by timestamp_ns. The list is already in
+ * time order, so a binary search finds the first packet newer than it.
+ * Mutates and returns the given array.
+ * @param {object[]} packets Packets sorted by timestamp_ns.
+ * @param {object} latePacket
+ * @returns {object[]}
+ */
+function insertByTimestamp(packets, latePacket) {
+  const lateNs = getTimestampNs(latePacket)
+  let low = 0
+  let high = packets.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if (getTimestampNs(packets[middle]) <= lateNs) low = middle + 1
+    else high = middle
+  }
+  packets.splice(low, 0, latePacket)
+  return packets
+}
+
+/**
  * @returns {{
  *   packets: object[], isCapturing: boolean, isConnected: boolean,
  *   captureError: string | null, selectedPacketId: string | null,
@@ -56,7 +91,16 @@ export function useCapture() {
       isLive: true,
       rowNumber: nextRowNumber.current++,
     }))
-    setPackets((previous) => [...previous, ...taggedPackets])
+    // The Backend flags late=true on a packet that arrived after newer ones
+    // were already sent: put it at its place by timestamp_ns, not at the end.
+    setPackets((previous) => {
+      const nextPackets = [...previous]
+      taggedPackets.forEach((packet) => {
+        if (packet.late) insertByTimestamp(nextPackets, packet)
+        else nextPackets.push(packet)
+      })
+      return nextPackets
+    })
   }, [])
 
   // A document was deleted from the database while capturing: drop it.
